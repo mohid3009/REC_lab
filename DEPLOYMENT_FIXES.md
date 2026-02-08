@@ -63,7 +63,7 @@ PORT=5000  # Render sets this automatically
 
 ## Known Considerations
 
-1. **Uploads Directory**: Files uploaded in production are stored in `/opt/render/project/src/server/uploads`. These are ephemeral on Render's free tier (lost on restart). Consider using cloud storage (S3, Cloudinary) for production.
+1. **Uploads Persistence**: ✅ Files are now stored in **MongoDB GridFS**, ensuring they persist across Render restarts/deployments. The previous ephemeral filesystem issue is resolved.
 
 2. **Session Store**: Uses `connect-mongo` with MongoStore, which is persistent across server restarts.
 
