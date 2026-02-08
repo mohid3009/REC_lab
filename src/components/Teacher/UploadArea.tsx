@@ -33,6 +33,7 @@ const UploadArea: React.FC = () => {
             const uploadPromise = fetch('/api/upload', {
                 method: 'POST',
                 body: formData,
+                credentials: 'include', // Include session cookie
             }).then(res => {
                 if (!res.ok) throw new Error('Upload failed');
                 return res.json();
@@ -70,6 +71,7 @@ const UploadArea: React.FC = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(templateData),
+                credentials: 'include', // Include session cookie
             });
 
             if (!createRes.ok) throw new Error('Failed to create template');
