@@ -21,7 +21,7 @@
     "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
-    "multer": "^2.0.2",
+    "multer": "1.4.5-lts.1",
     "multer-gridfs-storage": "^5.0.2",
     "uploadtopdf_template": "file:.."
   },
@@ -30,8 +30,8 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.18.2",
-    "@types/multer": "^2.0.0",
     "@types/multer-gridfs-storage": "^5.0.0",
+    "@types/multer": "^1.4.7",
     "@types/node": "^25.1.0",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
