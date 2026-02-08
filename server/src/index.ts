@@ -25,19 +25,29 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL || 'https://your-app.onrender.com']
-    : ['http://localhost:5173', 'http://localhost:5000'];
-
+// For production, accept requests from same origin (monolithic deployment)
+// or from FRONTEND_URL if deploying frontend separately
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
+        // Allow requests with no origin (server-side, Postman, curl, etc.)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
+
+        // In production, allow same-origin requests (when frontend is served by same server)
+        // Check if origin matches current host
+        const requestOrigin = new URL(origin);
+        const isLocalhost = requestOrigin.hostname === 'localhost' || requestOrigin.hostname === '127.0.0.1';
+        const isRenderDomain = requestOrigin.hostname.includes('.onrender.com');
+
+        if (isLocalhost || isRenderDomain) {
+            return callback(null, true);
         }
+
+        // Also check against FRONTEND_URL if set
+        if (process.env.FRONTEND_URL && origin.startsWith(process.env.FRONTEND_URL)) {
+            return callback(null, true);
+        }
+
+        callback(new Error('Not allowed by CORS'));
     },
     credentials: true
 }));
