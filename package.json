@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run build --prefix server",
+    "postinstall": "npm install --prefix server",
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "npm run dev --prefix server",
