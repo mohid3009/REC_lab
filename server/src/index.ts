@@ -272,6 +272,71 @@ app.put('/api/templates/:id', authenticate, requireRole('HOD'), async (req: Auth
     }
 });
 
+// Delete Template (HOD only, must own template)
+app.delete('/api/templates/:id', authenticate, requireRole('HOD'), async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        // Verify ownership
+        const template = await Template.findById(id);
+        if (!template) {
+            return res.status(404).json({ message: 'Template not found' });
+        }
+
+        if (template.createdBy.toString() !== req.user!.id) {
+            return res.status(403).json({ message: 'You can only delete your own templates' });
+        }
+
+        await Template.findByIdAndDelete(id);
+        console.log('Template deleted:', id);
+
+        // Optional: Clean up associated files in GridFS if we want strict cleanup
+        // But we might want to keep them if they are referenced by submissions
+        // For now, we keep the PDF file in GridFS to avoid breaking submissions
+
+        res.json({ message: 'Template deleted successfully' });
+    } catch (error: any) {
+        console.error('Delete template error:', error);
+        res.status(500).json({ message: 'Error deleting template', error: error.message });
+    }
+});
+
+// Copy Template (HOD only)
+app.post('/api/templates/:id/copy', authenticate, requireRole('HOD'), async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { targetCourseId } = req.body;
+
+        const originalTemplate = await Template.findById(id);
+        if (!originalTemplate) {
+            return res.status(404).json({ message: 'Template not found' });
+        }
+
+        // Create a copy
+        const newTemplateData = originalTemplate.toObject();
+        delete (newTemplateData as any)._id;
+        delete (newTemplateData as any).createdAt;
+        delete (newTemplateData as any).updatedAt;
+        delete (newTemplateData as any).__v;
+
+        const newTemplate = new Template({
+            ...newTemplateData,
+            title: `${originalTemplate.title} (Copy)`,
+            courseId: targetCourseId || originalTemplate.courseId,
+            createdBy: req.user!.id,
+            isPublished: false // Copies start as drafts
+        });
+
+        await newTemplate.save();
+        console.log('Template copied:', newTemplate._id);
+        res.status(201).json(newTemplate);
+
+    } catch (error: any) {
+        console.error('Copy template error:', error);
+        res.status(500).json({ message: 'Error copying template', error: error.message });
+    }
+});
+
 // Get Template (authenticated users only)
 app.get('/api/templates/:id', authenticate, async (req: AuthRequest, res: Response) => {
     try {

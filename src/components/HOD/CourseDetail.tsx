@@ -55,7 +55,7 @@ const CourseDetail: React.FC = () => {
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat"></div>
                     <div className="relative flex items-center justify-between">
                         <div>
-                            <h1 className="text-4xl font-serif font-bold tracking-tight text-white">{course.title}</h1>
+                            <h1 className="text-4xl font-serif font-bold tracking-tight text-white" style={{ color: '#FFFFFF' }}>{course.title}</h1>
                             <p className="text-white/60 font-sans mt-1 tracking-wide uppercase tracking-widest text-[10px] font-medium opacity-80">{course.department} • Master Directory</p>
                         </div>
                         <Link

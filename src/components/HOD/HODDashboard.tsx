@@ -103,7 +103,7 @@ const HODDashboard: React.FC = () => {
                 <div className="bg-ink text-white p-8 rounded-2xl shadow-xl mb-8 relative overflow-hidden group">
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat"></div>
                     <div className="relative">
-                        <h1 className="text-4xl font-serif font-bold tracking-tight text-white">HOD Dashboard</h1>
+                        <h1 className="text-4xl font-serif font-bold tracking-tight text-white" style={{ color: '#FFFFFF' }}>HOD Dashboard</h1>
                         <p className="text-white font-sans mt-1 tracking-wide uppercase tracking-widest text-[10px] font-medium opacity-80">Overview of department activities</p>
                     </div>
                 </div>

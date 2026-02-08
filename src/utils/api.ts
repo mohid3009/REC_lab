@@ -61,6 +61,17 @@ export const api = {
             method: 'PUT',
         }),
 
+    deleteTemplate: (id: string) =>
+        fetchWithAuth(`/templates/${id}`, {
+            method: 'DELETE',
+        }),
+
+    copyTemplate: (id: string, targetCourseId?: string) =>
+        fetchWithAuth(`/templates/${id}/copy`, {
+            method: 'POST',
+            body: JSON.stringify({ targetCourseId }),
+        }),
+
     // Classrooms
     getClassrooms: () => fetchWithAuth('/classrooms'),
 

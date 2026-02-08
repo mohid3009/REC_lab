@@ -66,7 +66,7 @@ const CourseList: React.FC = () => {
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat"></div>
                     <div className="relative flex items-center justify-between">
                         <div>
-                            <h1 className="text-4xl font-serif font-bold tracking-tight text-white">Department Courses</h1>
+                            <h1 className="text-4xl font-serif font-bold tracking-tight text-white" style={{ color: '#FFFFFF' }}>Department Courses</h1>
                             <p className="text-white/60 font-sans mt-1 tracking-wide uppercase tracking-widest text-[10px] font-medium opacity-80">Master directory of courses and their template libraries</p>
                         </div>
                         <button
@@ -99,7 +99,7 @@ const CourseList: React.FC = () => {
                                     <Card hover className="p-6 flex flex-col h-full group">
                                         <div className="bg-ink -mx-6 -mt-6 p-6 rounded-t-xl mb-4 group-hover:bg-black transition-colors">
                                             <div className="flex justify-between items-start">
-                                                <h3 className="font-serif font-bold text-xl text-white transition-colors">
+                                                <h3 className="font-serif font-bold text-xl text-white transition-colors" style={{ color: '#FFFFFF' }}>
                                                     {course.title}
                                                 </h3>
                                                 <div className="bg-accent/20 p-2 rounded-lg group-hover:bg-accent/30 transition-colors">
