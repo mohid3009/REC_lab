@@ -92,7 +92,7 @@ const HODClassroomList: React.FC = () => {
                 <div className="bg-ink text-white p-8 rounded-2xl shadow-xl mb-8 relative overflow-hidden group">
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat"></div>
                     <div className="relative">
-                        <h1 className="text-4xl font-serif font-bold tracking-tight text-white">Department Classrooms</h1>
+                        <h1 className="text-4xl font-serif font-bold tracking-tight text-white" style={{ color: '#FFFFFF' }}>Department Classrooms</h1>
                         <p className="text-white/60 font-sans mt-1 tracking-wide uppercase tracking-widest text-[10px] font-medium opacity-80">Overview of all classrooms in the department</p>
                     </div>
                 </div>
@@ -134,7 +134,7 @@ const HODClassroomList: React.FC = () => {
                                     <div className="bg-ink -mx-6 -mt-6 p-6 rounded-t-xl mb-4">
                                         <div className="flex justify-between items-start">
                                             <div className="pr-12">
-                                                <h3 className="font-serif font-bold text-xl text-white mb-1 group-hover:text-accent transition-colors">
+                                                <h3 className="font-serif font-bold text-xl text-white mb-1 group-hover:text-accent transition-colors" style={{ color: '#FFFFFF' }}>
                                                     {classroom.name}
                                                 </h3>
                                                 <span className="inline-block bg-white/10 text-white text-xs px-2 py-1 rounded font-mono border border-white/10">

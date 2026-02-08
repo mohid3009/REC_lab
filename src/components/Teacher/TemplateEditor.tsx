@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { DndContext, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useStore } from '../../store/useStore';
@@ -11,9 +11,11 @@ import { Loader2 } from 'lucide-react';
 import { getDocument } from 'pdfjs-dist';
 import clsx from 'clsx';
 import { v4 as uuidv4 } from 'uuid';
+import { api } from '../../utils/api';
 
 const TemplateEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const {
         currentTemplate, fields, updateField, removeField, removeFields, moveFields, setTemplate,
         scale, setScale, setActivePage, isZooming, setIsZooming,
@@ -331,6 +333,27 @@ const TemplateEditor: React.FC = () => {
         }
     };
 
+    const handleDelete = async () => {
+        if (!currentTemplate || !id) return;
+
+        if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await api.deleteTemplate(id);
+            // Navigate back to the course details or template list
+            if (currentTemplate.courseId) {
+                navigate(`/hod/courses/${currentTemplate.courseId}`);
+            } else {
+                navigate('/hod/templates');
+            }
+        } catch (error: any) {
+            console.error('Delete template error:', error);
+            alert('Error deleting template: ' + error.message);
+        }
+    };
+
     if (loading) return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
     if (!currentTemplate) return <div>Template not found</div>;
 
@@ -351,12 +374,23 @@ const TemplateEditor: React.FC = () => {
                         />
                         <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase font-medium tracking-wider">Editor</span>
                     </div>
-                    <button
-                        onClick={handleSave}
-                        className="bg-ink text-white px-4 py-1.5 rounded text-sm hover:bg-black transition-all flex items-center space-x-2 shadow-sm"
-                    >
-                        <span>Save Template</span>
-                    </button>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={handleDelete}
+                            className="bg-red-50 text-red-600 px-4 py-1.5 rounded text-sm hover:bg-red-100 transition-all flex items-center space-x-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>Delete</span>
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            className="bg-ink text-white px-4 py-1.5 rounded text-sm hover:bg-black transition-all flex items-center space-x-2 shadow-sm"
+                        >
+                            <span>Save Template</span>
+                        </button>
+                    </div>
                 </header>
 
                 <div className="flex flex-1 overflow-hidden" onMouseUp={handleMouseUp}>
