@@ -179,7 +179,7 @@ const ClassroomDetail: React.FC = () => {
                         </div>
                         <div className="flex flex-col space-y-3">
                             <Link
-                                to={`/ teacher / classrooms / ${id} /assignments/new`}
+                                to={`/teacher/classrooms/${id}/experiments/new`}
                                 className="bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent-hover transition-all shadow-md hover:shadow-lg font-bold flex items-center justify-center space-x-2 border border-white/10 uppercase tracking-widest text-xs"
                             >
                                 <Plus className="w-5 h-5" />
@@ -248,7 +248,7 @@ const ClassroomDetail: React.FC = () => {
                                 <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                                 <p className="text-gray-500 mb-4">No experiments yet</p>
                                 <Link
-                                    to={`/teacher/classrooms/${id}/assignments/new`}
+                                    to={`/teacher/classrooms/${id}/experiments/new`}
                                     className="inline-block bg-ink text-white px-6 py-2 rounded-lg hover:bg-black transition-all"
                                 >
                                     Create First Experiment

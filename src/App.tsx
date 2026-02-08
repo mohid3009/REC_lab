@@ -176,7 +176,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/teacher/classrooms/:id/assignments/new"
+            path="/teacher/classrooms/:id/experiments/new"
             element={
               <ProtectedRoute allowedRoles={['Teacher']}>
                 <CreateExperiment />
