@@ -19,10 +19,12 @@ const FormFiller: React.FC = () => {
     const [experiment, setExperiment] = useState<any>(null);
 
     useEffect(() => {
+        // Set default zoom to 120% for students
+        setScale(1.2);
         if (assignmentId) {
             loadExperimentAndSubmission();
         }
-    }, [assignmentId, setTemplate]);
+    }, [assignmentId, setTemplate, setScale]);
 
     const loadExperimentAndSubmission = async () => {
         try {

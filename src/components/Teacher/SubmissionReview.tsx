@@ -44,7 +44,7 @@ const SubmissionReview: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [remarks, setRemarks] = useState('');
-    const [grade, setGrade] = useState<number>(0);
+    const [grade, setGrade] = useState<number | string>('');
     const [feedback, setFeedback] = useState('');
     const [showGradeModal, setShowGradeModal] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -75,7 +75,7 @@ const SubmissionReview: React.FC = () => {
 
             setSubmission(data);
             setRemarks(data.remarks || '');
-            setGrade(data.grade || 0);
+            setGrade(data.grade !== undefined ? data.grade : '');
             setFeedback(data.feedback || '');
 
             // Set template in store for PdfCanvas and overlays
@@ -121,14 +121,14 @@ const SubmissionReview: React.FC = () => {
     };
 
     const handleGradeAndLock = async () => {
-        if (grade < 0 || grade > 100) {
-            alert('Grade must be between 0 and 100');
+        if (grade === '' || Number(grade) < 0 || Number(grade) > 10) {
+            alert('Please enter a valid grade between 0 and 10');
             return;
         }
 
         setProcessing(true);
         try {
-            await api.finalizeSubmission(id!, grade, feedback);
+            await api.finalizeSubmission(id!, Number(grade), feedback);
             alert('Submission graded and locked successfully');
             navigate(`/teacher/experiments/${submission?.experimentId._id}/submissions`);
         } catch (err: any) {
@@ -442,7 +442,7 @@ const SubmissionReview: React.FC = () => {
                                     max="10"
                                     step="0.1"
                                     value={grade}
-                                    onChange={(e) => setGrade(Number(e.target.value))}
+                                    onChange={(e) => setGrade(e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg text-lg font-bold focus:ring-2 focus:ring-gold focus:border-transparent"
                                 />
                             </div>
