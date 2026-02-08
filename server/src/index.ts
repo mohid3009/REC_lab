@@ -79,8 +79,22 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+console.log('Upload directory path:', uploadDir);
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log('Created upload directory');
+    } else {
+        console.log('Upload directory already exists');
+    }
+    // Test write permissions
+    const testFile = path.join(uploadDir, '.write-test');
+    fs.writeFileSync(testFile, 'test');
+    fs.unlinkSync(testFile);
+    console.log('Upload directory is writable');
+} catch (error) {
+    console.error('Upload directory error:', error);
+    console.error('WARNING: File uploads may not work!');
 }
 
 // Database Connection
@@ -121,11 +135,18 @@ app.use('/api/batches', batchRoutes);
 
 // Upload Route (requires authentication)
 app.post('/api/upload', authenticate, upload.single('pdf'), (req: AuthRequest, res: Response) => {
-    if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
+    try {
+        if (!req.file) {
+            console.error('Upload failed: No file in request');
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+        console.log('File uploaded successfully:', req.file.filename);
+        const fileUrl = `/uploads/${req.file.filename}`;
+        res.json({ url: fileUrl, filename: req.file.filename });
+    } catch (error: any) {
+        console.error('Upload error:', error);
+        res.status(500).json({ message: 'Upload failed', error: error.message });
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl, filename: req.file.filename });
 });
 
 // Create Template (HOD only)
