@@ -24,7 +24,16 @@ export interface AuthRequest extends Request {
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         // Check if user is logged in via session
-        if (!req.session.userId) {
+        console.log('Auth Check:', {
+            path: req.path,
+            sessionID: req.sessionID,
+            hasSession: !!req.session,
+            userId: req.session?.userId,
+            cookie: req.headers.cookie ? 'present' : 'missing'
+        });
+
+        if (!req.session || !req.session.userId) {
+            console.log('Authentication failed: No session or userId');
             return res.status(401).json({ message: 'Not authenticated. Please log in.' });
         }
 
