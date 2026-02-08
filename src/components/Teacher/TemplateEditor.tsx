@@ -124,7 +124,6 @@ const TemplateEditor: React.FC = () => {
             cursorRef.current = { x: e.clientX, y: e.clientY };
         };
 
-        const container = document.querySelector('.editor-scroll-container');
 
 
         const handleKeyDown = (e: KeyboardEvent) => {
