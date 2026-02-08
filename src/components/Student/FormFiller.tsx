@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import PdfCanvas from '../Teacher/PdfCanvas';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, ArrowLeft, Download, Send } from 'lucide-react';
 import { getDocument } from 'pdfjs-dist';
 import clsx from 'clsx';
 import type { PdfField } from '../../types';
@@ -289,77 +289,90 @@ const FormFiller: React.FC = () => {
 
     return (
         <div className="flex flex-col h-screen bg-[#FDFCFB] overflow-hidden">
-            <header className="h-auto bg-white border-b border-gray-100 px-10 py-4 z-10 shadow-sm">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <div>
-                            <h1 className="font-serif text-2xl font-bold text-ink">{experiment?.title || currentTemplate.title}</h1>
-                            {experiment?.classroomId?.name && (
-                                <p className="text-sm text-gray-500">{experiment.classroomId.name}</p>
-                            )}
-                        </div>
-                        <span className={`text-xs px-3 py-1 rounded-full uppercase font-bold tracking-widest ${status === 'GRADED' ? 'bg-green-100 text-green-700' :
-                            status === 'NEEDS_REVISION' ? 'bg-yellow-100 text-yellow-700' :
-                                status === 'SUBMITTED' ? 'bg-blue-100 text-blue-700' :
-                                    'bg-gray-100 text-gray-600'
-                            }`}>
-                            {status === 'GRADED' ? 'Graded' :
-                                status === 'NEEDS_REVISION' ? 'Needs Revision' :
-                                    status === 'SUBMITTED' ? 'Submitted' :
-                                        'Not Submitted'}
-                        </span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                        {canExport && (
-                            <button
-                                onClick={handleExportPdf}
-                                className="group flex items-center space-x-3 bg-green-600 text-white px-6 py-2.5 rounded hover:bg-green-700 transition-all shadow-md hover:shadow-lg"
-                            >
-                                <Save className="w-5 h-5" />
-                                <span className="font-medium tracking-tight">Download PDF</span>
-                            </button>
-                        )}
-                        {!isLocked && (
-                            <button
-                                onClick={handleSubmit}
-                                disabled={submitting}
-                                className="group flex items-center space-x-3 bg-ink text-white px-8 py-2.5 rounded hover:bg-black transition-all disabled:opacity-50 shadow-md hover:shadow-lg"
-                            >
-                                {submitting ? <Loader2 className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5 text-gold" />}
-                                <span className="font-medium tracking-tight">
-                                    {status === 'NEEDS_REVISION' ? 'Resubmit' : status === 'SUBMITTED' ? 'Update Submission' : 'Submit'}
-                                </span>
-                            </button>
-                        )}
+            <header className="h-16 bg-white border-b border-gray-200 px-6 z-10 shadow-sm flex items-center justify-between">
+                {/* Left: Back Button + Course Title */}
+                <div className="flex items-center w-1/3">
+                    <Link
+                        to={`/student/classrooms/${experiment?.classroomId?._id}`}
+                        className="p-2 mr-3 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-ink"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    <div>
+                        <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Course</p>
+                        <h2 className="font-serif font-bold text-ink text-lg leading-tight truncate">
+                            {experiment?.classroomId?.name || '...'}
+                        </h2>
                     </div>
                 </div>
 
-                {/* Teacher Remarks */}
-                {submission?.remarks && status === 'NEEDS_REVISION' && (
-                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <p className="text-xs font-bold text-yellow-700 mb-1">TEACHER REMARKS</p>
-                        <p className="text-sm text-gray-700">{submission.remarks}</p>
-                    </div>
-                )}
+                {/* Middle: Experiment Title */}
+                <div className="w-1/3 flex flex-col items-center justify-center">
+                    <h1 className="font-serif text-xl font-bold text-ink text-center truncate w-full px-4">
+                        {experiment?.title || currentTemplate.title}
+                    </h1>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-widest ${status === 'GRADED' ? 'bg-green-100 text-green-700' :
+                        status === 'NEEDS_REVISION' ? 'bg-yellow-100 text-yellow-700' :
+                            status === 'SUBMITTED' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-600'
+                        }`}>
+                        {status === 'GRADED' ? 'Graded' :
+                            status === 'NEEDS_REVISION' ? 'Revision Needed' :
+                                status === 'SUBMITTED' ? 'Submitted' :
+                                    'Draft'}
+                    </span>
+                </div>
 
-                {/* Grade Display */}
-                {status === 'GRADED' && submission?.grade !== undefined && (
-                    <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-bold text-green-700 mb-1">FINAL GRADE</p>
-                                <p className="text-2xl font-serif font-bold text-green-900">{submission.grade}/10</p>
-                            </div>
-                            {submission.feedback && (
-                                <div className="flex-1 ml-6">
-                                    <p className="text-xs font-bold text-green-700 mb-1">FEEDBACK</p>
-                                    <p className="text-sm text-gray-700">{submission.feedback}</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
+                {/* Right: Action Buttons */}
+                <div className="w-1/3 flex items-center justify-end space-x-3">
+                    {canExport ? (
+                        <button
+                            onClick={handleExportPdf}
+                            className="flex items-center space-x-2 bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg font-medium"
+                        >
+                            <Download className="w-4 h-4" />
+                            <span>Download Experiment</span>
+                        </button>
+                    ) : (
+                        !isLocked && (
+                            <button
+                                onClick={handleSubmit}
+                                disabled={submitting}
+                                className="flex items-center space-x-2 bg-ink text-white px-5 py-2 rounded-lg hover:bg-black transition-all disabled:opacity-50 shadow-md hover:shadow-lg font-medium"
+                            >
+                                {submitting ? <Loader2 className="animate-spin w-4 h-4" /> : <Send className="w-4 h-4 text-gold" />}
+                                <span>
+                                    {status === 'NEEDS_REVISION' ? 'Resubmit Revision' : status === 'SUBMITTED' ? 'Update Submission' : 'Submit for Review'}
+                                </span>
+                            </button>
+                        )
+                    )}
+                </div>
             </header>
+
+            {/* Teaching Grades/Remarks Banner (if exists) */}
+            {(submission?.remarks || (status === 'GRADED' && submission?.grade !== undefined)) && (
+                <div className="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center justify-center space-x-8">
+                    {status === 'GRADED' && (
+                        <div className="flex items-center text-green-700">
+                            <span className="font-bold text-xs mr-2 uppercase tracking-wide">Final Grade:</span>
+                            <span className="font-serif font-bold text-xl">{submission.grade}/10</span>
+                        </div>
+                    )}
+                    {submission?.remarks && status === 'NEEDS_REVISION' && (
+                        <div className="flex items-center text-yellow-700 max-w-2xl">
+                            <span className="font-bold text-xs mr-2 uppercase tracking-wide shrink-0">Teacher Remarks:</span>
+                            <span className="text-sm truncate">{submission.remarks}</span>
+                        </div>
+                    )}
+                    {submission?.feedback && status === 'GRADED' && (
+                        <div className="flex items-center text-green-700 max-w-2xl">
+                            <span className="font-bold text-xs mr-2 uppercase tracking-wide shrink-0">Feedback:</span>
+                            <span className="text-sm truncate">{submission.feedback}</span>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="flex-1 overflow-auto p-12 bg-subtle-gray/30">
                 <div className="flex flex-col gap-12 items-center pb-32">
