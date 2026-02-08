@@ -68,14 +68,11 @@ app.use(session({
     cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         httpOnly: true,
-        cookie: {
-            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-            httpOnly: true,
-            secure: false, // TEMPORARY DEBUG: Disable secure cookie requirement
-            sameSite: 'lax',
-            path: '/'
-        }
-    }));
+        secure: false, // TEMPORARY DEBUG
+        sameSite: 'lax',
+        path: '/'
+    }
+}));
 
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
