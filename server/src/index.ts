@@ -430,7 +430,7 @@ if (process.env.NODE_ENV === 'production') {
     const frontendDistPath = path.join(__dirname, '../../dist');
     app.use(express.static(frontendDistPath));
 
-    app.get('(.*)', (req, res) => {
+    app.get('/:any*', (req, res) => {
         // Don't intercept API calls
         if (req.path.startsWith('/api')) {
             return res.status(404).json({ message: 'API endpoint not found' });
