@@ -24,6 +24,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust Proxy for Render (Required for secure cookies behind load balancer)
+app.set('trust proxy', 1);
+
 // Middleware
 // For production, accept requests from same origin (monolithic deployment)
 // or from FRONTEND_URL if deploying frontend separately

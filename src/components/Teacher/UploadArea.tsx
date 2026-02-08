@@ -34,8 +34,11 @@ const UploadArea: React.FC = () => {
                 method: 'POST',
                 body: formData,
                 credentials: 'include', // Include session cookie
-            }).then(res => {
-                if (!res.ok) throw new Error('Upload failed');
+            }).then(async res => {
+                if (!res.ok) {
+                    const error = await res.json().catch(() => ({}));
+                    throw new Error(error.message || 'Upload failed');
+                }
                 return res.json();
             });
 
