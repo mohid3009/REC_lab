@@ -124,25 +124,27 @@ const TemplateEditor: React.FC = () => {
             cursorRef.current = { x: e.clientX, y: e.clientY };
         };
 
-        const handleWheel = (e: WheelEvent) => {
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? -0.1 : 0.1;
-                const currentScale = useStore.getState().scale;
-                const newScale = Math.min(2.0, Math.max(0.5, currentScale + delta));
-                handleZoom(newScale);
-            }
-        };
-
         const container = document.querySelector('.editor-scroll-container');
-        if (container) {
-            container.addEventListener('wheel', handleWheel as any, { passive: false });
-        }
+
 
         const handleKeyDown = (e: KeyboardEvent) => {
             // Don't trigger shortcuts if user is typing in an input
             const isTyping = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName);
             if (isTyping) return;
+
+            // Zoom Shortcuts (+ and -)
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                const currentScale = useStore.getState().scale;
+                handleZoom(Math.min(2.0, currentScale + 0.1));
+                return;
+            }
+            if (e.key === '-') {
+                e.preventDefault();
+                const currentScale = useStore.getState().scale;
+                handleZoom(Math.max(0.5, currentScale - 0.1));
+                return;
+            }
 
             // Delete / Backspace Logic - handle multiple
             if ((e.key === 'Delete' || e.key === 'Backspace') && selectedFieldIds.length > 0) {
@@ -230,9 +232,6 @@ const TemplateEditor: React.FC = () => {
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('keydown', handleKeyDown);
-            if (container) {
-                container.removeEventListener('wheel', handleWheel as any);
-            }
         };
     }, [selectedFieldIds, removeFields, currentTemplate, scale, setSelectedFieldIds]);
 
