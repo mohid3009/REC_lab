@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  /* Sky & Lavender Pastel Palette */
+  --color-paper: #F0F9FF;
+  /* Sky Mist */
+  --color-surface: #FFFFFF;
+  /* Pure White */
+  --color-ink: #1E293B;
+  /* Slate 800 */
+  --color-ink-light: #64748B;
+  /* Slate 500 */
+  --color-accent: #A855F7;
+  /* Lavender - slightly more saturated for contrast */
+  --color-accent-hover: #9333EA;
+  --color-subtle-gray: #F8FAFC;
+  --color-beige: #FCF8F1;
+
+  /* Card specific text colors (Dark on Light) */
+  --color-card-ink: #0F172A;
+  --color-card-ink-light: #475569;
+
+  /* Semantic Colors */
+  --color-success: #059669;
+  --color-error: #DC2626;
+  --color-warning: #D97706;
+
+  --font-serif: "Fraunces", serif;
+  --font-sans: "Inter", sans-serif;
+
+  --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+}
+
+html,
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  font-size: 14px;
+  /* Default font size reduced for compact feel */
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: #FFFFFF !important;
+}
+
+::-moz-selection {
+  background-color: var(--color-accent);
+  color: #FFFFFF !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  color: var(--color-ink);
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--color-ink);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #0f172a;
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.pdf-canvas-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}

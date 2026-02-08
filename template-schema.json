@@ -1,0 +1,269 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "PDF Template System Schema",
+    "description": "JSON Schema definitions for PDF Template and Submission objects",
+    "definitions": {
+        "PdfField": {
+            "type": "object",
+            "required": [
+                "id",
+                "type",
+                "page",
+                "x",
+                "y",
+                "width",
+                "height"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the field"
+                },
+                "fieldId": {
+                    "type": "string",
+                    "description": "Alternative field ID (used in database, normalized to 'id' in frontend)"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "text",
+                        "multiline",
+                        "number",
+                        "image",
+                        "signature",
+                        "date",
+                        "checkbox"
+                    ],
+                    "description": "Type of input field"
+                },
+                "page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Page number (1-indexed)"
+                },
+                "x": {
+                    "type": "number",
+                    "description": "X coordinate in PDF points (from top-left)"
+                },
+                "y": {
+                    "type": "number",
+                    "description": "Y coordinate in PDF points (from top-left)"
+                },
+                "width": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Width in PDF points"
+                },
+                "height": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Height in PDF points"
+                },
+                "label": {
+                    "type": "string",
+                    "description": "Optional field label or placeholder text"
+                },
+                "required": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether this field is required to be filled"
+                },
+                "fontSize": {
+                    "type": "number",
+                    "minimum": 1,
+                    "default": 12,
+                    "description": "Font size for text rendering in points"
+                }
+            }
+        },
+        "Template": {
+            "type": "object",
+            "required": [
+                "_id",
+                "title",
+                "pdfUrl",
+                "pageCount",
+                "dimensions",
+                "fields",
+                "isPublished",
+                "createdAt"
+            ],
+            "properties": {
+                "_id": {
+                    "type": "string",
+                    "description": "MongoDB ObjectId as string"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display name of the template"
+                },
+                "pdfUrl": {
+                    "type": "string",
+                    "description": "URL or path to the source PDF file"
+                },
+                "pageCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Total number of pages in the PDF"
+                },
+                "dimensions": {
+                    "type": "object",
+                    "required": [
+                        "width",
+                        "height"
+                    ],
+                    "properties": {
+                        "width": {
+                            "type": "number",
+                            "description": "PDF width in points"
+                        },
+                        "height": {
+                            "type": "number",
+                            "description": "PDF height in points"
+                        }
+                    }
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PdfField"
+                    },
+                    "description": "Array of fillable fields in the template"
+                },
+                "isPublished": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the template is published and available for students"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 timestamp of template creation"
+                }
+            }
+        },
+        "Submission": {
+            "type": "object",
+            "required": [
+                "_id",
+                "templateId",
+                "studentId",
+                "values",
+                "status"
+            ],
+            "properties": {
+                "_id": {
+                    "type": "string",
+                    "description": "MongoDB ObjectId as string"
+                },
+                "templateId": {
+                    "type": "string",
+                    "description": "Reference to Template._id"
+                },
+                "studentId": {
+                    "type": "string",
+                    "description": "Identifier for the student who submitted"
+                },
+                "values": {
+                    "type": "object",
+                    "description": "Field values keyed by field.id",
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "boolean"
+                            }
+                        ]
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "DRAFT",
+                        "LOCKED"
+                    ],
+                    "description": "Submission status - DRAFT or LOCKED"
+                },
+                "submittedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 timestamp when status changed to LOCKED"
+                }
+            }
+        },
+        "UploadResponse": {
+            "type": "object",
+            "required": [
+                "url",
+                "filename"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "Relative URL to access the uploaded file"
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Generated filename with timestamp"
+                }
+            }
+        }
+    },
+    "examples": [
+        {
+            "templateExample": {
+                "_id": "67a123456789abcdef012345",
+                "title": "Student Enrollment Form 2026",
+                "pdfUrl": "/uploads/1738450987123-enrollment.pdf",
+                "pageCount": 2,
+                "dimensions": {
+                    "width": 612,
+                    "height": 792
+                },
+                "fields": [
+                    {
+                        "id": "student_name",
+                        "type": "text",
+                        "page": 1,
+                        "x": 150,
+                        "y": 200,
+                        "width": 300,
+                        "height": 25,
+                        "label": "Student Full Name",
+                        "required": true,
+                        "fontSize": 14
+                    },
+                    {
+                        "id": "consent",
+                        "type": "checkbox",
+                        "page": 2,
+                        "x": 50,
+                        "y": 700,
+                        "width": 20,
+                        "height": 20,
+                        "label": "I agree to terms",
+                        "required": true
+                    }
+                ],
+                "isPublished": true,
+                "createdAt": "2026-02-01T10:30:00.000Z"
+            },
+            "submissionExample": {
+                "_id": "67a987654321fedcba098765",
+                "templateId": "67a123456789abcdef012345",
+                "studentId": "STU2026001",
+                "values": {
+                    "student_name": "Alice Johnson",
+                    "consent": true
+                },
+                "status": "LOCKED",
+                "submittedAt": "2026-02-02T03:15:30.000Z"
+            }
+        }
+    ]
+}
