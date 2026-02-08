@@ -441,7 +441,13 @@ app.put('/api/submissions/:id/grade', authenticate, requireRole('Teacher'), asyn
 // Serve static files from the React app if in production
 if (process.env.NODE_ENV === 'production') {
     const frontendDistPath = path.join(__dirname, '../../dist');
-    app.use(express.static(frontendDistPath));
+    console.log('Production mode: Serving static files from:', frontendDistPath);
+    console.log('Directory exists:', fs.existsSync(frontendDistPath));
+
+    app.use(express.static(frontendDistPath, {
+        maxAge: '1d',
+        index: false // Don't serve index.html automatically, let our middleware handle it
+    }));
 
     // Fallback for SPA routing - serve index.html for all non-API routes
     app.use((req, res, next) => {
@@ -449,8 +455,11 @@ if (process.env.NODE_ENV === 'production') {
         if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
             return next();
         }
+        console.log('Serving index.html for path:', req.path);
         res.sendFile(path.join(frontendDistPath, 'index.html'));
     });
+} else {
+    console.log('Development mode: Static files not served by Express');
 }
 
 app.listen(PORT, () => {
