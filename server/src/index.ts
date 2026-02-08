@@ -111,7 +111,21 @@ const storage = multer.diskStorage({
         cb(null, `${Date.now()}-${file.originalname}`);
     }
 });
-const upload = multer({ storage });
+
+const upload = multer({
+    storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        // Accept PDFs only
+        if (file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only PDF files are allowed'));
+        }
+    }
+});
 
 // API Health check (specific route, won't interfere with SPA)
 app.get('/api/health', (req, res) => {
@@ -134,19 +148,32 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/batches', batchRoutes);
 
 // Upload Route (requires authentication)
-app.post('/api/upload', authenticate, upload.single('pdf'), (req: AuthRequest, res: Response) => {
-    try {
-        if (!req.file) {
-            console.error('Upload failed: No file in request');
-            return res.status(400).json({ message: 'No file uploaded' });
+app.post('/api/upload', authenticate, (req: AuthRequest, res: Response, next) => {
+    upload.single('pdf')(req, res, (err) => {
+        if (err) {
+            console.error('Multer upload error:', err);
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    return res.status(400).json({ message: 'File too large. Maximum size is 10MB.' });
+                }
+                return res.status(400).json({ message: `Upload error: ${err.message}` });
+            }
+            return res.status(400).json({ message: err.message || 'Upload failed' });
         }
-        console.log('File uploaded successfully:', req.file.filename);
-        const fileUrl = `/uploads/${req.file.filename}`;
-        res.json({ url: fileUrl, filename: req.file.filename });
-    } catch (error: any) {
-        console.error('Upload error:', error);
-        res.status(500).json({ message: 'Upload failed', error: error.message });
-    }
+
+        try {
+            if (!req.file) {
+                console.error('Upload failed: No file in request');
+                return res.status(400).json({ message: 'No file uploaded' });
+            }
+            console.log('File uploaded successfully:', req.file.filename);
+            const fileUrl = `/uploads/${req.file.filename}`;
+            res.json({ url: fileUrl, filename: req.file.filename });
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            res.status(500).json({ message: 'Upload failed', error: error.message });
+        }
+    });
 });
 
 // Create Template (HOD only)
