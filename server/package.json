@@ -22,6 +22,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
     "multer": "^2.0.2",
+    "multer-gridfs-storage": "^5.0.2",
     "uploadtopdf_template": "file:.."
   },
   "devDependencies": {
