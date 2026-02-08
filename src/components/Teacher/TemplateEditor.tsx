@@ -9,7 +9,6 @@ import Sidebar from './Sidebar';
 import PropertiesPanel from './PropertiesPanel';
 import { Loader2 } from 'lucide-react';
 import { getDocument } from 'pdfjs-dist';
-import clsx from 'clsx';
 import { v4 as uuidv4 } from 'uuid';
 import { api } from '../../utils/api';
 
@@ -18,7 +17,7 @@ const TemplateEditor: React.FC = () => {
     const navigate = useNavigate();
     const {
         currentTemplate, fields, updateField, removeField, removeFields, moveFields, setTemplate,
-        scale, setScale, setActivePage, isZooming, setIsZooming,
+        scale, setScale, setActivePage,
         selectedFieldIds, setSelectedFieldIds, updateTemplateTitle
     } = useStore();
     const [loading, setLoading] = useState(!currentTemplate);
@@ -115,13 +114,8 @@ const TemplateEditor: React.FC = () => {
     };
 
     const handleZoom = (newScale: number) => {
-        setIsZooming(true);
+        // Immediate zoom without hiding fields
         setScale(newScale);
-
-        // Short delay to allow PDF to re-render before showing fields
-        setTimeout(() => {
-            setIsZooming(false);
-        }, 500); // 500ms should be enough for most renders
     };
 
     // Keyboard Shortcuts, Mouse Tracking & Scroll Zoom
@@ -423,10 +417,7 @@ const TemplateEditor: React.FC = () => {
 
                                         {/* Fields Layer */}
                                         <div
-                                            className={clsx(
-                                                "absolute inset-0 pointer-events-none transition-opacity duration-300",
-                                                isZooming ? "opacity-0" : "opacity-100"
-                                            )}
+                                            className="absolute inset-0 pointer-events-none"
                                         >
                                             {fields.filter(f => f.page === pageNum).map(field => (
                                                 <div key={field.id} className="pointer-events-auto">

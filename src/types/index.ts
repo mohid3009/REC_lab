@@ -19,6 +19,7 @@ export interface Template {
     dimensions: { width: number; height: number };
     fields: PdfField[];
     isPublished: boolean;
+    courseId?: string;
     createdAt: string;
 }
 

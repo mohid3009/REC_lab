@@ -64,7 +64,7 @@ const DraggableField: React.FC<DraggableFieldProps> = ({ field, isSelected, onSe
         height: field.height * scale,
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         touchAction: 'none',
-        fontSize: `${12 * scale}px`,
+        fontSize: `${14 * scale}px`,
         willChange: (isDragging || isResizing) ? 'transform, width, height' : 'auto',
     };
 
@@ -98,8 +98,8 @@ const DraggableField: React.FC<DraggableFieldProps> = ({ field, isSelected, onSe
                 {field.label || field.type}
             </div>
 
-            <div className="w-full h-full flex items-center justify-center p-0.5">
-                <span className="text-[10px] text-ink/40 font-mono pointer-events-none select-none overflow-hidden truncate">
+            <div className="w-full h-full flex items-center justify-start pl-2 p-0.5">
+                <span className="text-ink/60 font-sans pointer-events-none select-none overflow-hidden truncate">
                     {field.type === 'checkbox' ? '' : (field.label || field.type)}
                 </span>
             </div>
