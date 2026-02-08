@@ -88,9 +88,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Routes
-app.get('/', (req, res) => {
-    res.send('PDF Form System API');
+// API Health check (specific route, won't interfere with SPA)
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'PDF Form System API' });
 });
 
 // Auth routes
