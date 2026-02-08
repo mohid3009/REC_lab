@@ -123,6 +123,15 @@ export const api = {
             method: 'POST',
             body: JSON.stringify(data),
         }),
+    updateCourse: (id: string, data: { title: string; description: string; department: string }) =>
+        fetchWithAuth(`/courses/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        }),
+    deleteCourse: (id: string) =>
+        fetchWithAuth(`/courses/${id}`, {
+            method: 'DELETE',
+        }),
 
     // Experiments
     getExperiments: (classroomId: string) =>

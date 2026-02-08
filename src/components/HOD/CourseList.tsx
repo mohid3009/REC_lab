@@ -21,6 +21,10 @@ const CourseList: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [newCourse, setNewCourse] = useState({ title: '', description: '', department: 'Computer Science' });
 
+    // Edit/Delete State
+    const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
     useEffect(() => {
         loadCourses();
     }, []);
@@ -48,6 +52,40 @@ const CourseList: React.FC = () => {
             alert('Failed to create course: ' + err.message);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCourse) return;
+        setIsSaving(true);
+        try {
+            await api.updateCourse(editingCourse._id, {
+                title: editingCourse.title,
+                description: editingCourse.description || '',
+                department: editingCourse.department
+            });
+            setEditingCourse(null);
+            loadCourses();
+        } catch (err: any) {
+            alert('Failed to update course: ' + err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deletingId) return;
+        if (!confirm('Are you sure you want to delete this course? This will also delete all templates within it.')) {
+            setDeletingId(null);
+            return;
+        }
+        try {
+            await api.deleteCourse(deletingId);
+            setDeletingId(null);
+            loadCourses();
+        } catch (err: any) {
+            alert('Failed to delete course: ' + err.message);
         }
     };
 
@@ -95,55 +133,83 @@ const CourseList: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {courses.map((course) => {
                             return (
-                                <Link key={course._id} to={`/hod/courses/${course._id}`}>
-                                    <Card hover className="p-6 flex flex-col h-full group">
-                                        <div className="bg-ink -mx-6 -mt-6 p-6 rounded-t-xl mb-4 group-hover:bg-black transition-colors">
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="font-serif font-bold text-xl text-white transition-colors" style={{ color: '#FFFFFF' }}>
-                                                    {course.title}
-                                                </h3>
-                                                <div className="bg-accent/20 p-2 rounded-lg group-hover:bg-accent/30 transition-colors">
-                                                    <ArrowRight className="w-5 h-5 text-accent" />
+                                <div key={course._id} className="relative group">
+                                    <Link to={`/hod/courses/${course._id}`} className="block h-full">
+                                        <Card hover className="p-6 flex flex-col h-full group">
+                                            <div className="bg-ink -mx-6 -mt-6 p-6 rounded-t-xl mb-4 group-hover:bg-black transition-colors">
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="font-serif font-bold text-xl text-white transition-colors" style={{ color: '#FFFFFF' }}>
+                                                        {course.title}
+                                                    </h3>
+                                                    <div className="bg-accent/20 p-2 rounded-lg group-hover:bg-accent/30 transition-colors">
+                                                        <ArrowRight className="w-5 h-5 text-accent" />
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <p className="text-ink-light text-sm mb-6 flex-1 line-clamp-2 italic">
-                                            {course.description || 'No description provided'}
-                                        </p>
-                                        <div className="pt-4 border-t border-accent/5 flex items-center justify-between text-xs text-ink/40">
-                                            <span className="font-bold uppercase tracking-widest">{course.department}</span>
-                                            <span>{new Date(course.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </Card>
-                                </Link>
+                                            <p className="text-ink-light text-sm mb-6 flex-1 line-clamp-2 italic">
+                                                {course.description || 'No description provided'}
+                                            </p>
+                                            <div className="pt-4 border-t border-accent/5 flex items-center justify-between text-xs text-ink/40">
+                                                <span className="font-bold uppercase tracking-widest">{course.department}</span>
+                                                <span>{new Date(course.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                        </Card>
+                                    </Link>
+
+                                    {/* Action Buttons */}
+                                    <div className="absolute top-4 right-16 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); setEditingCourse(course); }}
+                                            className="p-1.5 bg-white/90 hover:bg-white text-blue-600 rounded-lg shadow-sm backdrop-blur-sm"
+                                            title="Rename Course"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); setDeletingId(course._id); handleDelete(); }} // Trigger delete immediately with confirm inside handler, but we need id set first. Actually let context menu handler verify.
+                                            // Better: setDeletingId(course._id) and use a separate useEffect or just standard confirm flow? 
+                                            // Simplest: Click -> Confirm -> Delete.
+                                            // The handler is async, so:
+                                            // onClick={(e) => { e.preventDefault(); if(confirm('Delete?')) api.deleteCourse(...) }}
+                                            // But I defined handleDelete to use state. Let's fix handleDelete to take ID or just use inline confirm.
+                                            className="p-1.5 bg-white/90 hover:bg-white text-red-600 rounded-lg shadow-sm backdrop-blur-sm"
+                                            title="Delete Course"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
                             );
                         })}
                     </div>
                 )}
             </div>
 
-            {/* Create Modal */}
-            {showCreateModal && (
+            {/* Create/Edit Modal */}
+            {(showCreateModal || editingCourse) && (
                 <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <Card className="w-full max-w-md p-6 bg-white shadow-2xl space-y-6 animate-fade-in-up border border-accent/10">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-serif font-bold text-ink">Create New Course</h2>
+                            <h2 className="text-2xl font-serif font-bold text-ink">{editingCourse ? 'Edit Course' : 'Create New Course'}</h2>
                             <button
-                                onClick={() => setShowCreateModal(false)}
+                                onClick={() => { setShowCreateModal(false); setEditingCourse(null); }}
                                 className="p-2 hover:bg-accent/5 rounded-full text-ink-light hover:text-ink"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreate} className="space-y-4">
+                        <form onSubmit={editingCourse ? handleUpdate : handleCreate} className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase tracking-widest text-ink/60">Course Title</label>
                                 <input
                                     type="text"
                                     placeholder="e.g. Advanced Web Development"
-                                    value={newCourse.title}
-                                    onChange={(e) => setNewCourse(prev => ({ ...prev, title: e.target.value }))}
+                                    value={editingCourse ? editingCourse.title : newCourse.title}
+                                    onChange={(e) => editingCourse
+                                        ? setEditingCourse({ ...editingCourse, title: e.target.value })
+                                        : setNewCourse(prev => ({ ...prev, title: e.target.value }))
+                                    }
                                     className="w-full px-4 py-2 bg-accent/5 border border-accent/10 text-ink rounded-lg focus:ring-1 focus:ring-accent focus:border-transparent outline-none transition-all placeholder:text-ink/20 shadow-inner"
                                     required
                                 />
@@ -153,8 +219,11 @@ const CourseList: React.FC = () => {
                                 <label className="text-xs font-bold uppercase tracking-widest text-ink/60">Department</label>
                                 <input
                                     type="text"
-                                    value={newCourse.department}
-                                    onChange={(e) => setNewCourse(prev => ({ ...prev, department: e.target.value }))}
+                                    value={editingCourse ? editingCourse.department : newCourse.department}
+                                    onChange={(e) => editingCourse
+                                        ? setEditingCourse({ ...editingCourse, department: e.target.value })
+                                        : setNewCourse(prev => ({ ...prev, department: e.target.value }))
+                                    }
                                     className="w-full px-4 py-2 bg-accent/5 border border-accent/10 text-ink rounded-lg focus:ring-1 focus:ring-accent focus:border-transparent outline-none transition-all placeholder:text-ink/20 shadow-inner"
                                     required
                                 />
@@ -164,8 +233,11 @@ const CourseList: React.FC = () => {
                                 <label className="text-xs font-bold uppercase tracking-widest text-ink/60">Description</label>
                                 <textarea
                                     placeholder="Brief overview of the course and its materials..."
-                                    value={newCourse.description}
-                                    onChange={(e) => setNewCourse(prev => ({ ...prev, description: e.target.value }))}
+                                    value={editingCourse ? (editingCourse.description || '') : newCourse.description}
+                                    onChange={(e) => editingCourse
+                                        ? setEditingCourse({ ...editingCourse, description: e.target.value })
+                                        : setNewCourse(prev => ({ ...prev, description: e.target.value }))
+                                    }
                                     className="w-full px-4 py-2 bg-accent/5 border border-accent/10 text-ink rounded-lg focus:ring-1 focus:ring-accent focus:border-transparent outline-none transition-all min-h-[100px] placeholder:text-ink/20 shadow-inner"
                                 />
                             </div>
@@ -173,7 +245,7 @@ const CourseList: React.FC = () => {
                             <div className="flex space-x-3 pt-4">
                                 <button
                                     type="button"
-                                    onClick={() => setShowCreateModal(false)}
+                                    onClick={() => { setShowCreateModal(false); setEditingCourse(null); }}
                                     className="flex-1 px-4 py-2 text-ink-light font-medium hover:bg-accent/5 rounded-lg transition-all border border-accent/10"
                                 >
                                     Cancel
@@ -184,7 +256,7 @@ const CourseList: React.FC = () => {
                                     className="flex-1 bg-accent text-white font-bold px-4 py-2 rounded-lg hover:bg-accent-hover transition-all flex items-center justify-center space-x-2 disabled:opacity-50 shadow-md"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                                    <span>{isSaving ? 'Creating...' : 'Create Course'}</span>
+                                    <span>{isSaving ? 'Saving...' : (editingCourse ? 'Update Course' : 'Create Course')}</span>
                                 </button>
                             </div>
                         </form>

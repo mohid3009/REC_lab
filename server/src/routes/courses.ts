@@ -51,4 +51,51 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     }
 });
 
+// Update a course (HOD only)
+router.put('/:id', authenticate, requireRole('HOD'), async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { title, description, department } = req.body;
+
+        const course = await Course.findByIdAndUpdate(
+            id,
+            { title, description, department },
+            { new: true, runValidators: true }
+        );
+
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        res.json(course);
+    } catch (error) {
+        console.error('Update course error:', error);
+        res.status(500).json({ message: 'Error updating course', error });
+    }
+});
+
+// Delete a course (HOD only)
+router.delete('/:id', authenticate, requireRole('HOD'), async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        // Check if course exists
+        const course = await Course.findById(id);
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        // Delete associated templates first
+        await Template.deleteMany({ courseId: id });
+
+        // Delete the course
+        await Course.findByIdAndDelete(id);
+
+        res.json({ message: 'Course and associated templates deleted successfully' });
+    } catch (error) {
+        console.error('Delete course error:', error);
+        res.status(500).json({ message: 'Error deleting course', error });
+    }
+});
+
 export default router;
