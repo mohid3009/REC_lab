@@ -112,7 +112,7 @@ connect.then(() => console.log('Connected to MongoDB'))
 let gridfsBucket: mongoose.mongo.GridFSBucket;
 
 mongoose.connection.once('open', () => {
-    gridfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+    gridfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db!, {
         bucketName: 'uploads'
     });
     console.log('GridFS initialized');
@@ -131,7 +131,7 @@ const storage = new GridFsStorage({
 });
 
 const upload = multer({
-    storage,
+    storage: storage as any,
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB limit
     },
