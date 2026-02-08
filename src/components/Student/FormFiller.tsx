@@ -233,19 +233,30 @@ const FormFiller: React.FC = () => {
         }
     };
 
-    const handleSubmit = async () => {
+    const handleSave = async (submitFn: boolean = false) => {
         if (!currentTemplate || !experiment) return;
 
-        const missing = currentTemplate.fields?.filter(f => f.required && !values[f.id]);
-        if (missing && missing.length > 0) {
-            alert(`Please fill all required fields: ${missing.map(f => f.label).join(', ')}`);
-            return;
+        // If submitting, validate required fields
+        if (submitFn) {
+            const missing = currentTemplate.fields?.filter(f => f.required && !values[f.id]);
+            if (missing && missing.length > 0) {
+                alert(`Please fill all required fields: ${missing.map(f => f.label).join(', ')}`);
+                return;
+            }
         }
 
         setSubmitting(true);
         try {
             const method = submission ? 'PUT' : 'POST';
             const url = submission ? `/api/submissions/${submission._id}` : '/api/submissions';
+
+            // Determine status: 
+            // - If submitting: 'SUBMITTED'
+            // - If saving: Keep current status, or 'NOT_SUBMITTED' if new
+            let newStatus = submission?.status || 'NOT_SUBMITTED';
+            if (submitFn) {
+                newStatus = 'SUBMITTED';
+            }
 
             const response = await fetch(url, {
                 method,
@@ -255,7 +266,7 @@ const FormFiller: React.FC = () => {
                     experimentId: assignmentId,
                     templateId: currentTemplate._id,
                     values: values,
-                    status: 'SUBMITTED'
+                    status: newStatus
                 })
             });
 
@@ -263,11 +274,18 @@ const FormFiller: React.FC = () => {
 
             const updatedSubmission = await response.json();
             setSubmission(updatedSubmission);
-            alert('Submission saved successfully! Your teacher will review it.');
-            await loadExperimentAndSubmission(); // Reload to get updated status
+
+            if (submitFn) {
+                alert('Submission submitted successfully! Your teacher will review it.');
+            } else {
+                // Optional: Toast notification for auto-save/manual save
+                // alert('Draft saved successfully.'); 
+            }
+
+            await loadExperimentAndSubmission();
         } catch (e) {
             console.error('Submission error:', e);
-            alert('Error submitting response');
+            alert('Error saving response');
         } finally {
             setSubmitting(false);
         }
@@ -287,146 +305,190 @@ const FormFiller: React.FC = () => {
     const status = submission?.status || 'NOT_SUBMITTED';
     const canExport = status === 'GRADED' && isLocked;
 
+    // derived display values
+    const courseName = experiment?.classroomId?.name || 'Course';
+    const experimentTitle = experiment?.title || currentTemplate.title;
+
     return (
-        <div className="flex flex-col h-screen bg-[#FDFCFB] overflow-hidden">
-            <header className="h-16 bg-white border-b border-gray-200 px-6 z-10 shadow-sm flex items-center justify-between">
-                {/* Left: Back Button + Course Title */}
-                <div className="flex items-center w-1/3">
-                    <Link
-                        to={`/student/classrooms/${experiment?.classroomId?._id}`}
-                        className="p-2 mr-3 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-ink"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </Link>
-                    <div>
-                        <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Course</p>
-                        <h2 className="font-serif font-bold text-ink text-lg leading-tight truncate">
-                            {experiment?.classroomId?.name || '...'}
-                        </h2>
+        <div className="flex h-screen bg-[#FDFCFB] overflow-hidden">
+            {/* Left Panel - Beige Sidebar */}
+            <aside className="w-80 bg-[#F9F7F1] border-r border-[#E8E6DE] flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+                {/* Panel Header */}
+                <div className="p-6 border-b border-[#E8E6DE]">
+                    <div className="flex items-center text-gray-400 mb-4 hover:text-ink transition-colors cursor-pointer w-fit" onClick={() => window.history.back()}>
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Back</span>
+                    </div>
+
+                    <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{courseName}</h2>
+                    <h1 className="font-serif text-2xl font-bold text-ink leading-tight">{experimentTitle}</h1>
+
+                    <div className="mt-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${status === 'GRADED' ? 'bg-green-100 text-green-700' :
+                                status === 'NEEDS_REVISION' ? 'bg-yellow-100 text-yellow-700' :
+                                    status === 'SUBMITTED' ? 'bg-blue-100 text-blue-700' :
+                                        'bg-gray-100 text-gray-600'
+                            }`}>
+                            {status === 'GRADED' ? 'Graded' :
+                                status === 'NEEDS_REVISION' ? 'Needs Revision' :
+                                    status === 'SUBMITTED' ? 'Submitted' :
+                                        'Draft'}
+                        </span>
                     </div>
                 </div>
 
-                {/* Middle: Experiment Title */}
-                <div className="w-1/3 flex flex-col items-center justify-center">
-                    <h1 className="font-serif text-xl font-bold text-ink text-center truncate w-full px-4">
-                        {experiment?.title || currentTemplate.title}
-                    </h1>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-widest ${status === 'GRADED' ? 'bg-green-100 text-green-700' :
-                        status === 'NEEDS_REVISION' ? 'bg-yellow-100 text-yellow-700' :
-                            status === 'SUBMITTED' ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-600'
-                        }`}>
-                        {status === 'GRADED' ? 'Graded' :
-                            status === 'NEEDS_REVISION' ? 'Revision Needed' :
-                                status === 'SUBMITTED' ? 'Submitted' :
-                                    'Draft'}
-                    </span>
+                {/* Panel Content - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* Teacher Remarks / Feedback */}
+                    {(submission?.remarks || submission?.feedback) && (
+                        <div className="space-y-4">
+                            {submission.remarks && status === 'NEEDS_REVISION' && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-sm">
+                                    <h3 className="text-xs font-bold text-yellow-800 uppercase tracking-wide mb-2 flex items-center">
+                                        <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />
+                                        Teacher Remarks
+                                    </h3>
+                                    <p className="text-sm text-gray-700 leading-relaxed italic">"{submission.remarks}"</p>
+                                </div>
+                            )}
+
+                            {submission.feedback && status === 'GRADED' && (
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-sm">
+                                    <h3 className="text-xs font-bold text-green-800 uppercase tracking-wide mb-2 flex items-center">
+                                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                                        Feedback
+                                    </h3>
+                                    <p className="text-sm text-gray-700 leading-relaxed italic">"{submission.feedback}"</p>
+                                    {submission.grade !== undefined && (
+                                        <div className="mt-3 pt-3 border-t border-green-200 flex justify-between items-center">
+                                            <span className="text-xs font-bold text-green-700 uppercase">Grade</span>
+                                            <span className="font-serif font-bold text-xl text-green-900">{submission.grade}/10</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Details / Instructions Placeholder */}
+                    <div className="bg-white border border-[#E8E6DE] rounded-lg p-4 shadow-sm">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Details</h3>
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-500">Page Count</span>
+                                <span className="font-medium text-ink">{numPages} Pages</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-500">Submissions</span>
+                                <span className="font-medium text-ink">{submission?.submittedAt ? '1' : '0'}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right: Action Buttons */}
-                <div className="w-1/3 flex items-center justify-end space-x-3">
-                    {canExport ? (
-                        <button
-                            onClick={handleExportPdf}
-                            className="flex items-center space-x-2 bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg font-medium"
-                        >
-                            <Download className="w-4 h-4" />
-                            <span>Download Experiment</span>
-                        </button>
-                    ) : (
-                        !isLocked && (
+                {/* Panel Footer - Actions */}
+                <div className="p-6 bg-white border-t border-[#E8E6DE] space-y-3 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] z-30">
+                    {!isLocked ? (
+                        <>
                             <button
-                                onClick={handleSubmit}
+                                onClick={() => handleSave(false)}
                                 disabled={submitting}
-                                className="flex items-center space-x-2 bg-ink text-white px-5 py-2 rounded-lg hover:bg-black transition-all disabled:opacity-50 shadow-md hover:shadow-lg font-medium"
+                                className="w-full flex items-center justify-center space-x-2 bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-all font-medium disabled:opacity-50"
+                            >
+                                <Save className="w-4 h-4" />
+                                <span>Save Draft</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleSave(true)}
+                                disabled={submitting}
+                                className="w-full flex items-center justify-center space-x-2 bg-ink text-white px-4 py-2.5 rounded-lg hover:bg-black transition-all shadow-lg hover:shadow-xl font-medium disabled:opacity-50"
                             >
                                 {submitting ? <Loader2 className="animate-spin w-4 h-4" /> : <Send className="w-4 h-4 text-gold" />}
-                                <span>
-                                    {status === 'NEEDS_REVISION' ? 'Resubmit Revision' : status === 'SUBMITTED' ? 'Update Submission' : 'Submit for Review'}
-                                </span>
+                                <span>{status === 'NEEDS_REVISION' ? 'Resubmit' : 'Submit for Review'}</span>
                             </button>
-                        )
+                        </>
+                    ) : (
+                        <div className="text-center p-2 text-sm text-gray-500 italic">
+                            Submission is locked
+                        </div>
+                    )}
+
+                    {canExport && (
+                        <button
+                            onClick={handleExportPdf}
+                            className="w-full flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-all shadow-lg hover:shadow-xl font-medium"
+                        >
+                            <Download className="w-4 h-4" />
+                            <span>Download PDF</span>
+                        </button>
                     )}
                 </div>
-            </header>
+            </aside>
 
-            {/* Teaching Grades/Remarks Banner (if exists) */}
-            {(submission?.remarks || (status === 'GRADED' && submission?.grade !== undefined)) && (
-                <div className="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center justify-center space-x-8">
-                    {status === 'GRADED' && (
-                        <div className="flex items-center text-green-700">
-                            <span className="font-bold text-xs mr-2 uppercase tracking-wide">Final Grade:</span>
-                            <span className="font-serif font-bold text-xl">{submission.grade}/10</span>
-                        </div>
-                    )}
-                    {submission?.remarks && status === 'NEEDS_REVISION' && (
-                        <div className="flex items-center text-yellow-700 max-w-2xl">
-                            <span className="font-bold text-xs mr-2 uppercase tracking-wide shrink-0">Teacher Remarks:</span>
-                            <span className="text-sm truncate">{submission.remarks}</span>
-                        </div>
-                    )}
-                    {submission?.feedback && status === 'GRADED' && (
-                        <div className="flex items-center text-green-700 max-w-2xl">
-                            <span className="font-bold text-xs mr-2 uppercase tracking-wide shrink-0">Feedback:</span>
-                            <span className="text-sm truncate">{submission.feedback}</span>
-                        </div>
-                    )}
-                </div>
-            )}
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+                {/* Beige Header */}
+                <header className="h-16 bg-[#F9F7F1] border-b border-[#E8E6DE] flex items-center px-8 justify-center shadow-sm z-10">
+                    <div className="text-center">
+                        <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Previewing</span>
+                        <h3 className="font-serif font-bold text-ink opacity-80 text-sm truncate max-w-md">{currentTemplate.title}</h3>
+                    </div>
+                </header>
 
-            <div className="flex-1 overflow-auto p-12 bg-subtle-gray/30">
-                <div className="flex flex-col gap-12 items-center pb-32">
-                    {Array.from({ length: numPages }, (_, index) => {
-                        const pageNum = index + 1;
-                        return (
-                            <div
-                                key={pageNum}
-                                className="relative transition-all duration-300 shadow-2xl bg-white border border-gray-100"
-                                style={{ width: 'fit-content', height: 'fit-content' }}
-                            >
-                                <div className="absolute -left-16 top-0 text-gray-300 font-serif italic text-sm">
-                                    Pg. {pageNum}
-                                </div>
-                                <PdfCanvas pageNumber={pageNum} />
-
+                <div className="flex-1 overflow-auto p-12 bg-subtle-gray/30 relative">
+                    <div className="flex flex-col gap-12 items-center pb-32">
+                        {Array.from({ length: numPages }, (_, index) => {
+                            const pageNum = index + 1;
+                            return (
                                 <div
-                                    className={clsx(
-                                        "absolute inset-0 transition-opacity duration-300",
-                                        isZooming ? "opacity-0" : "opacity-100"
-                                    )}
+                                    key={pageNum}
+                                    className="relative transition-all duration-300 shadow-xl bg-white"
+                                    style={{ width: 'fit-content', height: 'fit-content' }}
                                 >
-                                    {fields.filter(f => f.page === pageNum).map(field => (
-                                        <div key={field.id}>
-                                            {renderInput(field)}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
+                                    <div className="absolute -left-12 top-0 text-gray-300 font-serif italic text-xs">
+                                        Pg. {pageNum}
+                                    </div>
+                                    <PdfCanvas pageNumber={pageNum} />
 
-            {/* Zoom Toolbar */}
-            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md rounded-full shadow-2xl border border-white px-8 py-3.5 flex items-center space-x-6 z-50 transition-transform hover:scale-105 duration-300">
-                <button
-                    onClick={() => handleZoom(Math.max(0.4, scale - 0.1))}
-                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors text-xl text-gold font-bold"
-                >
-                    -
-                </button>
-                <div className="flex flex-col items-center">
-                    <span className="font-serif font-bold text-ink text-sm">
-                        {Math.round(scale * 100)}%
-                    </span>
-                    <span className="text-[10px] text-gray-400 uppercase tracking-tighter font-bold">Zoom</span>
+                                    <div
+                                        className={clsx(
+                                            "absolute inset-0 transition-opacity duration-300",
+                                            isZooming ? "opacity-0" : "opacity-100"
+                                        )}
+                                    >
+                                        {fields.filter(f => f.page === pageNum).map(field => (
+                                            <div key={field.id}>
+                                                {renderInput(field)}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-                <button
-                    onClick={() => handleZoom(Math.min(2.5, scale + 0.1))}
-                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors text-xl text-gold font-bold"
-                >
-                    +
-                </button>
+
+                {/* Zoom Toolbar (Floating) */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md rounded-full shadow-2xl border border-white px-6 py-2 flex items-center space-x-4 z-50 transition-transform hover:scale-105 duration-300 hover:shadow-gold/20">
+                    <button
+                        onClick={() => handleZoom(Math.max(0.4, scale - 0.1))}
+                        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors text-lg text-gold font-bold"
+                    >
+                        -
+                    </button>
+                    <div className="flex flex-col items-center min-w-[3rem]">
+                        <span className="font-serif font-bold text-ink text-sm">
+                            {Math.round(scale * 100)}%
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => handleZoom(Math.min(2.5, scale + 0.1))}
+                        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors text-lg text-gold font-bold"
+                    >
+                        +
+                    </button>
+                </div>
             </div>
         </div>
     );
