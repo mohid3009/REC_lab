@@ -451,8 +451,11 @@ if (process.env.NODE_ENV === 'production') {
 
     // Fallback for SPA routing - serve index.html for all non-API routes
     app.use((req, res, next) => {
-        // Don't intercept API calls or static files
-        if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+        // Don't intercept API calls, uploads, or static assets
+        if (req.path.startsWith('/api') ||
+            req.path.startsWith('/uploads') ||
+            req.path.startsWith('/assets') ||
+            req.path.includes('.')) {  // Skip files with extensions (CSS, JS, images, etc.)
             return next();
         }
         console.log('Serving index.html for path:', req.path);
