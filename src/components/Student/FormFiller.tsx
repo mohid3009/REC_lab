@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import PdfCanvas from '../Teacher/PdfCanvas';
-import { Loader2, ArrowLeft, Download, Send } from 'lucide-react';
+import { Loader2, ArrowLeft, Download, Send, Save } from 'lucide-react';
 import { getDocument } from 'pdfjs-dist';
 import clsx from 'clsx';
 import type { PdfField } from '../../types';
@@ -325,9 +325,9 @@ const FormFiller: React.FC = () => {
 
                     <div className="mt-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${status === 'GRADED' ? 'bg-green-100 text-green-700' :
-                                status === 'NEEDS_REVISION' ? 'bg-yellow-100 text-yellow-700' :
-                                    status === 'SUBMITTED' ? 'bg-blue-100 text-blue-700' :
-                                        'bg-gray-100 text-gray-600'
+                            status === 'NEEDS_REVISION' ? 'bg-yellow-100 text-yellow-700' :
+                                status === 'SUBMITTED' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-gray-100 text-gray-600'
                             }`}>
                             {status === 'GRADED' ? 'Graded' :
                                 status === 'NEEDS_REVISION' ? 'Needs Revision' :
