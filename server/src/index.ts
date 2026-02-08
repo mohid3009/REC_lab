@@ -119,9 +119,10 @@ mongoose.connection.once('open', () => {
 });
 
 // Storage Engine
+// Storage Engine
 const storage = new GridFsStorage({
-    url: prompt,
-    options: { useNewUrlParser: true, useUnifiedTopology: true },
+    // Use the existing Mongoose connection promise
+    db: connect.then(m => m.connection.db) as any,
     file: (req, file) => {
         return {
             filename: `${Date.now()}-${file.originalname}`,
