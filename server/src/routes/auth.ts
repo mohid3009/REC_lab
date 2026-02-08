@@ -33,15 +33,24 @@ router.post('/signup', async (req, res) => {
         req.session.role = user.role;
         req.session.name = user.name;
 
-        res.status(201).json({
-            message: 'User created successfully',
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                department: user.department
+        // Explicitly save session before responding
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ message: 'Error saving session' });
             }
+
+            console.log('Session saved successfully for new user:', user.email);
+            res.status(201).json({
+                message: 'User created successfully',
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    department: user.department
+                }
+            });
         });
     } catch (error: any) {
         console.error('Signup error:', error);
@@ -77,15 +86,24 @@ router.post('/login', async (req, res) => {
         req.session.role = user.role;
         req.session.name = user.name;
 
-        res.json({
-            message: 'Login successful',
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                department: user.department
+        // Explicitly save session before responding
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ message: 'Error saving session' });
             }
+
+            console.log('Session saved successfully for user:', user.email);
+            res.json({
+                message: 'Login successful',
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    department: user.department
+                }
+            });
         });
     } catch (error: any) {
         console.error('Login error:', error);
