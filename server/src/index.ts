@@ -443,10 +443,11 @@ if (process.env.NODE_ENV === 'production') {
     const frontendDistPath = path.join(__dirname, '../../dist');
     app.use(express.static(frontendDistPath));
 
-    app.get('/:any*', (req, res) => {
-        // Don't intercept API calls
-        if (req.path.startsWith('/api')) {
-            return res.status(404).json({ message: 'API endpoint not found' });
+    // Fallback for SPA routing - serve index.html for all non-API routes
+    app.use((req, res, next) => {
+        // Don't intercept API calls or static files
+        if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+            return next();
         }
         res.sendFile(path.join(frontendDistPath, 'index.html'));
     });
