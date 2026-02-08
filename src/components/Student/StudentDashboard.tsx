@@ -1,16 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, FileText, Plus, X } from 'lucide-react';
+import { BookOpen, FileText, Plus, X, School, FlaskConical, GraduationCap, Clock, Loader2 } from 'lucide-react';
 import { api } from '../../utils/api';
 import { Button } from '../Shared/UI/Button';
 import { Card } from '../Shared/UI/Card';
+
+interface StudentStats {
+    totalClassrooms: number;
+    totalExperiments: number;
+    completedExperiments: number;
+    pendingExperiments: number;
+    averageGrade: string;
+}
 
 const StudentDashboard: React.FC = () => {
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [joinCode, setJoinCode] = useState('');
     const [joining, setJoining] = useState(false);
     const [error, setError] = useState('');
+    const [stats, setStats] = useState<StudentStats | null>(null);
+    const [loadingStats, setLoadingStats] = useState(true);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            const data = await api.getStudentStats();
+            setStats(data);
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
 
     const handleJoinClass = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,13 +59,14 @@ const StudentDashboard: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-paper p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
-                <div className="bg-ink text-white p-8 rounded-2xl shadow-xl mb-8 relative overflow-hidden group">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="bg-ink text-white p-8 rounded-2xl shadow-xl relative overflow-hidden group">
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat"></div>
                     <div className="relative flex items-center justify-between">
                         <div>
                             <h1 className="text-4xl font-serif font-bold tracking-tight !text-white">Student Dashboard</h1>
-                            <p className="!text-white font-sans mt-1 tracking-wide uppercase tracking-widest text-[10px] font-medium">View your enrolled classrooms and experiments</p>
+                            <p className="!text-white font-sans mt-1 tracking-wide uppercase tracking-widest text-[10px] font-medium opacity-80">Overview & Quick Actions</p>
                         </div>
                         <Button
                             onClick={() => setShowJoinModal(true)}
@@ -52,38 +78,91 @@ const StudentDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Link to="/student/classrooms">
-                        <Card hover className="h-full flex items-center space-x-4 bg-blue-50/30 group">
-                            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm border border-blue-200">
-                                <BookOpen className="w-5 h-5" />
+                {/* Stats Grid */}
+                {loadingStats ? (
+                    <div className="flex justify-center p-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+                    </div>
+                ) : stats && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Card className="bg-white p-6 flex items-center space-x-4 border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="p-3 bg-blue-50 rounded-full text-blue-600">
+                                <School className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-serif font-bold text-ink text-lg mb-0.5">My Classrooms</h3>
-                                <p className="text-xs text-ink-light">View enrolled classrooms</p>
+                                <p className="text-xs uppercase tracking-wider font-bold text-gray-400">Classrooms</p>
+                                <p className="text-2xl font-serif font-bold text-ink">{stats.totalClassrooms}</p>
+                            </div>
+                        </Card>
+
+                        <Card className="bg-white p-6 flex items-center space-x-4 border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="p-3 bg-purple-50 rounded-full text-purple-600">
+                                <FlaskConical className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase tracking-wider font-bold text-gray-400">Experiments</p>
+                                <div className="flex items-baseline space-x-1">
+                                    <p className="text-2xl font-serif font-bold text-ink">{stats.completedExperiments}</p>
+                                    <span className="text-xs text-gray-400">/ {stats.totalExperiments}</span>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="bg-white p-6 flex items-center space-x-4 border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="p-3 bg-green-50 rounded-full text-green-600">
+                                <GraduationCap className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase tracking-wider font-bold text-gray-400">Avg Grade</p>
+                                <div className="flex items-baseline space-x-1">
+                                    <p className="text-2xl font-serif font-bold text-ink">{stats.averageGrade}</p>
+                                    <span className="text-xs text-gray-400">/ 10</span>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="bg-white p-6 flex items-center space-x-4 border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="p-3 bg-orange-50 rounded-full text-orange-600">
+                                <Clock className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase tracking-wider font-bold text-gray-400">Pending</p>
+                                <p className="text-2xl font-serif font-bold text-ink">{stats.pendingExperiments}</p>
+                            </div>
+                        </Card>
+                    </div>
+                )}
+
+                {/* Quick Links */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Link to="/student/classrooms" className="group">
+                        <Card hover className="h-full p-6 flex items-center justify-between bg-white border border-gray-100 hover:border-blue-200 transition-all shadow-sm hover:shadow-lg">
+                            <div className="flex items-center space-x-4">
+                                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                                    <BookOpen className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif font-bold text-ink text-xl mb-1">My Classrooms</h3>
+                                    <p className="text-sm text-gray-500">Access your enrolled courses and materials</p>
+                                </div>
                             </div>
                         </Card>
                     </Link>
 
-                    <Link to="/student/submissions">
-                        <Card hover className="h-full flex items-center space-x-4 bg-purple-50/30 group">
-                            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300 shadow-sm border border-purple-200">
-                                <FileText className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h3 className="font-serif font-bold text-ink text-lg mb-0.5">My Submissions</h3>
-                                <p className="text-xs text-ink-light">View grades and feedback</p>
+                    <Link to="/student/submissions" className="group">
+                        <Card hover className="h-full p-6 flex items-center justify-between bg-white border border-gray-100 hover:border-purple-200 transition-all shadow-sm hover:shadow-lg">
+                            <div className="flex items-center space-x-4">
+                                <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
+                                    <FileText className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif font-bold text-ink text-xl mb-1">My Submissions</h3>
+                                    <p className="text-sm text-gray-500">View your grades, feedback, and history</p>
+                                </div>
                             </div>
                         </Card>
                     </Link>
                 </div>
-
-                <Card className="bg-white">
-                    <h2 className="text-lg font-serif font-bold text-ink mb-3">Upcoming Experiments</h2>
-                    <div className="p-6 text-center border border-dashed border-accent/10 rounded-xl bg-accent/5">
-                        <p className="text-ink-light text-sm italic">No experiments due soon</p>
-                    </div>
-                </Card>
             </div>
 
             {/* Join Class Modal */}

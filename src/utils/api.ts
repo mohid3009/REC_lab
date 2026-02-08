@@ -77,6 +77,8 @@ export const api = {
 
     getTeacherStats: () => fetchWithAuth('/classrooms/stats/teacher'),
 
+    getStudentStats: () => fetchWithAuth('/classrooms/stats/student'),
+
     getClassroom: (id: string) => fetchWithAuth(`/classrooms/${id}`),
 
     getClassroomStats: (id: string) => fetchWithAuth(`/classrooms/${id}/stats`),

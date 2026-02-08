@@ -33,6 +33,55 @@ router.get('/:id/stats', authenticate, requireRole('Teacher'), async (req: AuthR
     }
 });
 
+// Get student dashboard stats
+router.get('/stats/student', authenticate, requireRole('Student'), async (req: AuthRequest, res: Response) => {
+    try {
+        const studentId = req.user!.id;
+
+        // 1. Get Enrolled Classrooms
+        const classrooms = await Classroom.find({ enrolledStudents: studentId });
+        const classroomIds = classrooms.map(c => c._id);
+
+        // 2. Get Total Experiments in those classrooms
+        const experiments = await Experiment.find({
+            classroomId: { $in: classroomIds }
+        });
+        const totalExperiments = experiments.length;
+
+        // 3. Get Student Submissions
+        const submissions = await Submission.find({ studentId });
+
+        // Calculate Completed (Unique experiments submitted)
+        const completedExperimentIds = new Set(
+            submissions
+                .filter(s => s.experimentId)
+                .map(s => s.experimentId!.toString())
+        );
+        const completedExperiments = completedExperimentIds.size;
+
+        // Calculate Pending
+        const pendingExperiments = totalExperiments - completedExperiments;
+
+        // Calculate Average Grade
+        const gradedSubmissions = submissions.filter(s => s.status === 'GRADED' && s.grade !== undefined);
+        const totalGrade = gradedSubmissions.reduce((sum, s) => sum + (s.grade || 0), 0);
+        const averageGrade = gradedSubmissions.length > 0
+            ? (totalGrade / gradedSubmissions.length).toFixed(1)
+            : '0';
+
+        res.json({
+            totalClassrooms: classrooms.length,
+            totalExperiments,
+            completedExperiments,
+            pendingExperiments: Math.max(0, pendingExperiments),
+            averageGrade
+        });
+    } catch (error: any) {
+        console.error('Student stats error:', error);
+        res.status(500).json({ message: 'Error fetching student stats', error: error.message });
+    }
+});
+
 // Create classroom (Teacher only)
 router.post('/', authenticate, requireRole('Teacher'), async (req: AuthRequest, res: Response) => {
     try {
