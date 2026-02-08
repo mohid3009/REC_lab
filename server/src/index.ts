@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
-import { GridFsStorage } from 'multer-gridfs-storage';
+import { Readable } from 'stream';
 
 import Template from './models/Template';
 import Submission from './models/Submission';
@@ -118,21 +118,11 @@ mongoose.connection.once('open', () => {
     console.log('GridFS initialized');
 });
 
-// Storage Engine
-// Storage Engine
-const storage = new GridFsStorage({
-    // Use the existing Mongoose connection promise
-    db: connect.then(m => m.connection.db) as any,
-    file: (req, file) => {
-        return {
-            filename: `${Date.now()}-${file.originalname}`,
-            bucketName: 'uploads'
-        };
-    }
-});
+// Storage Engine (Memory - for manual GridFS upload)
+const storage = multer.memoryStorage();
 
 const upload = multer({
-    storage: storage as any,
+    storage,
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB limit
     },
@@ -184,7 +174,7 @@ app.use('/api/batches', batchRoutes);
 
 // Upload Route (requires authentication)
 app.post('/api/upload', authenticate, (req: AuthRequest, res: Response, next) => {
-    upload.single('pdf')(req, res, (err) => {
+    upload.single('pdf')(req, res, async (err) => {
         if (err) {
             console.error('Multer upload error:', err);
             if (err instanceof multer.MulterError) {
@@ -201,10 +191,29 @@ app.post('/api/upload', authenticate, (req: AuthRequest, res: Response, next) =>
                 console.error('Upload failed: No file in request');
                 return res.status(400).json({ message: 'No file uploaded' });
             }
-            console.log('File uploaded successfully:', req.file.filename);
-            // Return URL that points to the file serving route
-            const fileUrl = `/api/files/${req.file.filename}`;
-            res.json({ url: fileUrl, filename: req.file.filename });
+
+            console.log('File received in memory:', req.file.originalname);
+
+            // Manual GridFS Upload
+            const filename = `${Date.now()}-${req.file.originalname}`;
+            const uploadStream = gridfsBucket.openUploadStream(filename, {
+                contentType: req.file.mimetype
+            });
+
+            const bufferStream = Readable.from(req.file.buffer);
+
+            bufferStream.pipe(uploadStream)
+                .on('error', (error) => {
+                    console.error('GridFS Upload Error:', error);
+                    res.status(500).json({ message: 'Error storing file in database' });
+                })
+                .on('finish', () => {
+                    console.log('File uploaded to GridFS successfully:', filename);
+                    // Return URL that points to the file serving route
+                    const fileUrl = `/api/files/${filename}`;
+                    res.json({ url: fileUrl, filename: filename });
+                });
+
         } catch (error: any) {
             console.error('Upload error:', error);
             res.status(500).json({ message: 'Upload failed', error: error.message });
