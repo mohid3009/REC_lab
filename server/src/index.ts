@@ -197,7 +197,9 @@ app.post('/api/upload', authenticate, (req: AuthRequest, res: Response, next) =>
             // Manual GridFS Upload
             const filename = `${Date.now()}-${req.file.originalname}`;
             const uploadStream = gridfsBucket.openUploadStream(filename, {
-                contentType: req.file.mimetype
+                metadata: {
+                    contentType: req.file.mimetype
+                }
             });
 
             const bufferStream = Readable.from(req.file.buffer);
